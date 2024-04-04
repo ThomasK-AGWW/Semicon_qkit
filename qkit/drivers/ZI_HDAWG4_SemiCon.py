@@ -85,7 +85,36 @@ class ZI_HDAWG4_SemiCon(ZI_HDAWG4):
                 
                 scaled_data = waveArray/new
                 np.savetxt(self.wave_dir + "wave" + index[0] + ".csv", scaled_data)
+
+ 
+
+    def zdict_to_CSV_ChatGPT_optimized(self, data_dict):
+        import csv
+        if not isinstance(data_dict, dict):
+            raise TypeError(f"{__name__}: Cannot use {type(data_dict)} input. Data must be a dictionary with channel names and corresponding wave data.")
+        
+        for channel_name, wave_data in data_dict.items():
+            index = [s for s in channel_name if s.isdigit()]
+            if any(x in channel_name for x in ["Trig", "trig"]):
+                trig_array = np.concatenate(wave_data["samples"]) if isinstance(wave_data, dict) else wave_data
+                with open(self.wave_dir + "marker" + index[0] + ".csv", 'w', newline='') as csvfile:
+                    writer = csv.writer(csvfile)
+                    for row in trig_array:
+                        writer.writerow([row])  # Convert each row to a list before writing
+            else:
+                wave_array = np.concatenate(wave_data["samples"]) if isinstance(wave_data, dict) else wave_data
                 
+                max_v = np.max(np.abs(wave_array))
+                new = self._Vrange_array[np.searchsorted(self._Vrange_array, max_v, side='left')]
+                print(f"Setting ch{index[0]} output range to {new}V to match waveform data.")
+                self.set(f'ch{index[0]}_output_range', new)
+                
+                scaled_data = wave_array / new
+                with open(self.wave_dir + "wave" + index[0] + ".csv", 'w', newline='') as csvfile:
+                    writer = csv.writer(csvfile)
+                    for value in scaled_data:
+                        writer.writerow([value])  # Convert each value to a list before writing
+            
 
     # define AWG program as string stored in the variable self.awg_program, equivalent to what
     # would be entered in the Sequence Editor window in the graphical UI.
@@ -111,7 +140,7 @@ class ZI_HDAWG4_SemiCon(ZI_HDAWG4):
             if "marker" in fileslist[i]:
                 marker_fileNum += 1
                 self.awg_program = self.awg_program + "wave marker" + str(marker_fileNum) + " = \"marker" + str(marker_fileNum) + "\";\n"
-            if "wave" in fileslist[i]:
+            if "wave" in fileslist[i] and i<4: ######## HACK !!!! Purpose is to not detect wave3 which usually goes in core 1 as manipulation pulse
                 wave_fileNum += 1
                 self.awg_program = self.awg_program + "wave w" + str(wave_fileNum) + " = \"wave" + str(wave_fileNum) + "\";\n"
         
