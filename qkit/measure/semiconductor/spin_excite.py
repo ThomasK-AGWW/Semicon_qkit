@@ -68,9 +68,39 @@ class Qupulse_decoder2:
     _seq_type = qupulse._program.waveforms.SequenceWaveform
     
     def __init__(self, *experiments, channel_sample_rates, measurement_sample_rates, deep_render = False, **kwargs):
-        """Mir ist bekannt, wie Deutsche auf ein Rezept für ihr liebstes Haustier reagieren. 
-        Ich „reiche“ dieses Rezept von einem Bekannten, der als Selbstständiger in Thailand lebt, 
-        nur durch. In Deutschland sind mir rechtlich die Hände gebunden, dies selbst zuzubereiten.
+        """
+        Constructor of Qupulse_decoder2, the virtual experiment decoder class. 
+        The constructor will raise a TypeError if the experimental instructions are not qupulse pulse templates, 
+        and their parameters are not given in the form of dictionaries. 
+        Will raise a ValueError if different experiments share the same measurements or channels. 
+        Will raise a ValueError if channels or measurements defined in the experiments have no assigned sampling rates 
+        by channel_sample_rates and measurement_sample_rates.
+
+        Input:
+        channel_sample_rates is a dictionary where each key represents a channel by its name as a string, 
+        and the value the sampling rate of said channel in samples per second as an integer.
+
+        measurement_sample_rates is a dictionary where each key represents a measurement by its name as a string, 
+        and the value the sampling rate of said measurement in samples per second as an integer.
+
+        deep_render is a Boolean value. If set to True, waveforms of different iterations are rendered separately 
+        and returned as a list where each entry represents the samples for the given iteration. If set to False, 
+        the list is returned flattened.
+
+        Parameters:
+        channel_pars is a dictionary containing the decoded channel instructions. It is a nested dictionary, 
+        with the first level containing the channels represented by their names as strings, and the second level
+        containing the channel parameters which are keyed as follows: "samples" Contains the the values to which to set the voltages of
+        the manipulation channel during each DAC-clockcycle.
+
+        measurement_pars is a dictionary containing the decoded measurement instructions. It is a nested dictionary, 
+        with the first level containing the measurements represented by their names as strings, and the second
+        level containing the measurement parameters which are keyed as follows:
+        "measurement_count" The number of iterations to complete until a measurement has collected all requested data.
+        "measurement_duration" The duration of the measurement in nanoseconds.
+        "sample_count" The number of samples to record upon a trigger for a single measurement iteration.
+        "loop_step_name_pp" The name of the pulse parameter iterated during the pulse train. In case a ForLoopPT is passed to the decoder, this corresponds to the name of the loop variable.
+        "loop_step_name_tt" defaults to "measurement_time".
         """
         self.experiments = experiments  
         self.measurement_pars = {}
@@ -657,12 +687,15 @@ class Exciting():
             raise TypeError(f"{__name__}: Cannot set {MA_backend} as manipulation backend. The backend must be a subclass of MA_backend_base")
     
     def compile(self, *experiments, averages, active_modes = ("PulseParameter",) , deep_render = False, **add_pars):   
-        """Währenddessen Zwiebeln und Wurzeln schälen. Zwiebeln kleinschneiden. Wurzeln in kurze Stifte schneiden. 
-        Öl in einem Wok erhitzen und Gemüse darin kurz pfannenrühren. Koriander kleinwiegen. Reis und Koriander dazugeben und alles vermischen. 
-        Reis-Gemüse-Mischung herausheben und warmstellen.
-        Nochmals Öl in den Wok geben und erhitzen. Fleisch hinzugeben und kurz pfannenrühren.
-        Fleisch und Reis-Gemüse-Mischung auf Teller geben und mit den Dipsaucen servieren. 
-        Das Gericht ist ungewürzt und erhält seinen Geschmack durch die jeweiligen Saucen.
+        """
+        Compiles the experimental instructions given by *experiments to the measurement hardware.
+        Upon the next call of measure1D, measure2D, measure3D the experiment will be executed as given by the instructions.
+        This method will raise a TypeError if the experimental instructions are not qupulse pulse templates, and their parameters are not given
+        in the form of dictionaries. Will raise a ValueError if different experiments share the same measurements or channels. 
+        Will raise a ValueError if not all measurements defined in the experimental instructions are assigned a number of averages by averages. 
+        Will raise an AttributeError if channels or measurements requested in the experimental instructions are not provided by the manipulation and readout backends.
+        The arguments are the same as in the spin_excite.Exciting constructor.
+
         """        
         self.mapper = Mapping_handler2()
         if "channel_mapping" in add_pars:
@@ -691,6 +724,13 @@ class Exciting():
         self.settings.load()
 
     def change_averages(self, averages):
+        '''
+        Changes the amount of averages performed without recompiling the whole experiment.
+        averages is a dictionary where each key represents a measurement by its name as a string, and each value the number of averages
+        which are to be taken by said measurement, represented by an integer.
+        '''
+
+
         self.mapper.map_measurements(averages)
         for measurement, new_avg in averages.items():
             if not isinstance(measurement, str):
