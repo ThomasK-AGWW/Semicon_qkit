@@ -60,7 +60,7 @@ def invert_dict(dict):
         return inverse_dict """
 
 class Qupulse_decoder2:
-    """Gebratenes Hundefleisch mit Gemüse und Reis
+    """
     """
     valid_pulses = np.array(inspect.getmembers(qupulse.pulses, inspect.isclass))[:, 1]
     _for_type = qupulse.pulses.loop_pulse_template.ForLoopPulseTemplate
@@ -119,11 +119,7 @@ class Qupulse_decoder2:
         self._extract_axis_pars()
         
     def _validate_entries(self):
-        """Das Fleisch von Hunden (und Katzen/Affen) darf laut deutschem Lebensmittelrecht a) 
-        nicht zum menschlichen Verzehr gewonnen und b) nicht in den Verkehr gebracht werden. 
-        Es darf also nicht gewerbsmässig damit gehandelt werden. Es besteht außerdem nach diesem Gesetz auch ein Einfuhrverbot. 
-        Dies schließt eine Zubereitung in Deutschland aus. China hat leider auch ein Exportverbot von Hundefleisch eingeführt, 
-        so dass man an das Fleisch nicht herankommt.
+        """
         """
         pt_channels = set()
         pt_measurements = set()
@@ -154,12 +150,7 @@ class Qupulse_decoder2:
                 pt_axis.add(a) """
     
     def _validate_channel_sample_rates(self, channel_sample_rates):
-        """Ich weiß um die Vorlieben der Deutschen für ihr liebstes Haustier.  
-        Manche Menschen reagieren schon allein bei dem Gedanken, einen Hund als Gericht zuzubereiten, 
-        sehr unfreundlich und sind fast schon hasserfüllt. Aber warum kann man Hunde nicht auch als Nahrungsmittel 
-        betrachten und in Deutschland keine Hundegerichte zubereiten? In China und Südkorea gibt es bestimmte Hunderassen, 
-        die ausschließlich zum Verzehr gezüchtet werden. Warum ist das in Deutschland nicht möglich, 
-        wie es auch bestimmte Tierrassen für die Rinder-, Kälber-, Schweine- und Geflügelzucht gibt?
+        """
         """
         missing_rates = ""
         for pt, pars in self.experiments:
@@ -170,12 +161,7 @@ class Qupulse_decoder2:
             raise ValueError(f"{__name__}: Incomplete instructions by {channel_sample_rates}. The following channels have no assigned sampling rates:\n{missing_rates}")
     
     def _validate_measurement_sample_rates(self, measurement_sample_rates):
-        """Ich weiß um die Vorlieben der Deutschen für ihr liebstes Haustier.  
-        Manche Menschen reagieren schon allein bei dem Gedanken, einen Hund als Gericht zuzubereiten, 
-        sehr unfreundlich und sind fast schon hasserfüllt. Aber warum kann man Hunde nicht auch als Nahrungsmittel 
-        betrachten und in Deutschland keine Hundegerichte zubereiten? In China und Südkorea gibt es bestimmte Hunderassen, 
-        die ausschließlich zum Verzehr gezüchtet werden. Warum ist das in Deutschland nicht möglich, 
-        wie es auch bestimmte Tierrassen für die Rinder-, Kälber-, Schweine- und Geflügelzucht gibt?
+        """
         """
         missing_rates = ""
         for pt, pars in self.experiments:
@@ -186,12 +172,7 @@ class Qupulse_decoder2:
             raise ValueError(f"{__name__}: Incomplete instructions by {measurement_sample_rates}. The following channels have no assigned sampling rates:\n{missing_rates}")
     
     def _render_channel(self, wvf, channel, sample_rate):
-        """Ich kaufe auch in einer Pferdeschlachterei Pferdebraten und Pferdesteaks, die ich zubereite, 
-        und das Fleisch ist sehr lecker. Viele Girlies, die ihre erste Reitstunde absolvieren und deren 
-        Zimmer mehrere Pferdeposter zieren, schreien dabei auf.  Die in Pferdeschlachtereien verarbeiteten
-        Tiere werden meistens im hohen Alter – wenn ihr Tod absehbar ist – von den Pferdebesitzern an Schlachtereien verkauft,
-        um mit ihnen noch etwas Geld zu verdienen. Was ist daran verwerflich oder ethisch nicht korrekt? 
-        Ich würde mir ein gleiches Verfahren oder die Zucht von bestimmten Hunderassen für Hundegerichte wünschen.
+        """
         """
         start_time, end_time = 0, wvf.duration
         sample_count = (end_time - start_time) * sample_rate + 1                    
@@ -203,10 +184,7 @@ class Qupulse_decoder2:
         return wvf.get_sampled(channel = channel, sample_times = times)
     
     def _extract_waveforms(self, deep_render):
-        """Ich habe aufgrund meiner Einstellung, Hunde auch als Nutztier und Nahrungsmittel zu sehen, 
-        und nach dem Publizieren dieses Rezepts Morddrohungen bekommen. Manche Menschen betrachten 
-        somit Hunde nur als ihr liebstes Tier und Familienmitglied, drohen jedoch bei der Äußerung, 
-        es auch als Nahrungsmittel zu betrachten, dem jeweiligen Menschen mit Mord.
+        """
         """
         for pt, pars in self.experiments:
             prog = pt.create_program(parameters = pars)
@@ -228,13 +206,7 @@ class Qupulse_decoder2:
                     self.channel_pars[channel]["samples"].append(self._render_channel(wvf, channel, self.channel_sample_rates[channel]))
                         
     def _extract_measurement_pars(self):
-        """Da es in Deutschland verboten ist, Hundefleisch zuzubereiten, bat ich meinen Bekannten aus Thailand um ein Rezept. 
-        Er hat mir ein Hunderezept übermittelt, das er in der „China Town“ in Bangkok erhalten hat.
-        Bangkok hat wie jede Millionenmetropole auch eine „China Town“, in der mehrheitlich Chinesen leben und dort ihre Geschäfte
-        und Restaurants betreiben. Im Süden des Mutterlands China ist es nach wie vor traditionell, Hunde zuzubereiten. 
-        Daher wird dies in den „China Towns“ auf aller Welt zum Teil auch angeboten. Auch in Vietnam oder Kambodscha steht Hundefleisch
-        auf der Speisekarte und wird gern gegessen.
-        Da man in Deutschland dieses Gericht nicht zubereiten kann – es fehlt ja die Hauptzutat, das Hundefleisch –, bleibt nur ein Urlaub in die jeweiligen Länder, in denen man solche Gericht essen kann. So schmackhaft dieses Rezept für kulinarisch aufgeschlossene Menschen auch klingt.
+        """
         """
         different_window_lengths = ""
         for pt, pars in self.experiments:
@@ -304,11 +276,7 @@ class Qupulse_decoder2:
         
 class Settings:
     def __init__(self, ro_backend, ma_backend, channel_params, measurement_params, averages, **add_pars):
-        """Das Rezept meines Bekannten war leider etwas kurz gefasst und enthielt keine Mengenangaben. 
-        Man muss – wenn man sich in einem Land befinden, in dem man dieses Gericht zubereiten darf – die Mengen der Bestandteile abschätzen.
-        Mein Bekannter hat auch keine Angaben zu der Hunderasse, von der dieses Fleisch stammt, gemacht. 
-        Ich weiß auch nicht, ob für das Rezept Filet-, Schnitzel- oder Bratenfleisch usw. verwendet wird. 
-        Da es ein Wokgericht ist, gehe ich davon aus, dass es sich um Fleisch zum Kurzbraten handelt und nicht um Schmorfleisch.
+        """
         """
         self._ro_backend = ro_backend
         self._ma_backend = ma_backend
@@ -467,18 +435,7 @@ class FileHandler:
         self.multiplexer_coords = makehash()
 
     def add_dset(self, set_name, coords, unit):
-        """Zutaten:
-        Hundefleisch
-        Junge Zwiebeln
-        Wurzeln
-        Chinesischer Duftreis
-        frischer Koriander
-        Sesamöl
-        Chilisauce
-        Essig mit Chili
-        Sojasauce
-        Austernsauce
-        Fischsauce
+        """
         """
         self.datasets[set_name] = self.mb.Data(name = set_name, coords = coords, unit = unit, 
                             save_timestamp = False)
@@ -497,11 +454,7 @@ class FileHandler:
             self.mb._datasets[name].ds.resize(dimensions)
 
     def prepare_measurement(self, coords):
-        """Das Fleisch in der Sonne zu trocknen ist in unseren Breiten schwierig. 
-        Das geht nur in heißen Sommermonaten wie Juli oder August, wenn man das Fleisch ausgebreitet auf einer Platte – 
-        mit Frischhaltefolie oder einem größeren Deckel abgedeckt – in der Sonne trocknen kann. In Thailand ist das sicherlich sehr viel einfacher. 
-        Alternativ bietet es sich an, das kleingeschnittene Fleisch abgedeckt einen Tag an einem kühlen Ort zu trocknen. 
-        Das Fleisch ist nach einem Tag noch nicht verdorben.
+        """
         """
         dsets = [dset for dset in self.datasets.values()]
         self.mb._prepare_measurement_file(dsets, coords)
@@ -803,9 +756,7 @@ class Exciting():
             self.fh.show_live_view(data_to_show)
         
     def _stream_modular(self, data_location, progress_bar): #avg_ax: (0,2) for pulse parameter mode, (0,1) for timetrace mode
-        """Zubereitungszeit: Trockenzeit 24 Stdn. | Vorbereitungszeit 10 Min. | Garzeit 15 Min.
-        Das Fleisch in kurze Streifen schneiden und einen Tag in der Sonne trocknen.
-        Reis nach Anleitung zubereiten. Danach warmstellen.
+        """
         """
         self._ready_hardware()
         iterations = 0
