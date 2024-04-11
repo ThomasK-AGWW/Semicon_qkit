@@ -76,26 +76,34 @@ class Qupulse_decoder2:
         Will raise a ValueError if channels or measurements defined in the experiments have no assigned sampling rates 
         by channel_sample_rates and measurement_sample_rates.
 
-        Input:
-        channel_sample_rates is a dictionary where each key represents a channel by its name as a string, 
+        Inputs:
+        channel_sample_rates: dict
+        --------------------------
+        where each key represents a channel by its name as a string, 
         and the value the sampling rate of said channel in samples per second as an integer.
 
-        measurement_sample_rates is a dictionary where each key represents a measurement by its name as a string, 
+        measurement_sample_rates: dict
+        ------------------------------ 
+        where each key represents a measurement by its name as a string, 
         and the value the sampling rate of said measurement in samples per second as an integer.
 
-        deep_render is a Boolean value. If set to True, waveforms of different iterations are rendered separately 
+        deep_render: boolean
+        --------------------
+        If set to True, waveforms of different iterations are rendered separately 
         and returned as a list where each entry represents the samples for the given iteration. If set to False, 
         the list is returned flattened.
 
         Parameters:
-        channel_pars is a dictionary containing the decoded channel instructions. It is a nested dictionary, 
-        with the first level containing the channels represented by their names as strings, and the second level
-        containing the channel parameters which are keyed as follows: "samples" Contains the the values to which to set the voltages of
-        the manipulation channel during each DAC-clockcycle.
+        channel_pars: dict
+        ------------------
+        contains the decoded channel instructions. It is a nested dictionary, with the first level containing the channels represented by their names as strings, 
+        and the second level containing the channel parameters which are keyed as follows: "samples" Contains the values to which to set the voltages 
+        of  the manipulation channel during each DAC-clockcycle.
 
-        measurement_pars is a dictionary containing the decoded measurement instructions. It is a nested dictionary, 
-        with the first level containing the measurements represented by their names as strings, and the second
-        level containing the measurement parameters which are keyed as follows:
+        measurement_pars: dict
+        ----------------------
+        containing the decoded measurement instructions. It is a nested dictionary, with the first level containing the measurements 
+        represented by their names as strings, and the second level containing the measurement parameters which are keyed as follows:
         "measurement_count" The number of iterations to complete until a measurement has collected all requested data.
         "measurement_duration" The duration of the measurement in nanoseconds.
         "sample_count" The number of samples to record upon a trigger for a single measurement iteration.
@@ -277,6 +285,45 @@ class Qupulse_decoder2:
 class Settings:
     def __init__(self, ro_backend, ma_backend, channel_params, measurement_params, averages, **add_pars):
         """
+        Constructor of Settings, the generalized hardware interface class. The constructor will raise a ValueError if not all measurements defined in
+        measurement_params are assigned a number of averages by averages. Will raise an AttributeError if channels or measurements requested
+        in measurement_params and channel_params are not provided by the manipulation and readout backends.
+
+        Inputs:
+        ro_backend: subclass
+        -------------------- 
+        of the RO_backend_base, used as interface to the readout hardware.
+
+        ma_backend: subclass 
+        --------------------
+        of the MA_backend_base, used as interface to the manipulation hardware.
+
+        channel_params: nested dict
+        --------------------------- 
+        where on the first level each key represents a channel by its name. The second level contains the parameters for each channel. 
+        An example of the required structure is given by spin_excite.Qupulse_decoder2.channel_pars.
+
+        measurement_params: nested dict 
+        -------------------------------
+        where on the first level each key represents a measurement by its name. The second level contains the parameters for each measurement. 
+        An example of the required structure is given by spin_excite.Qupulse_decoder2.measurement_pars.
+
+        averages: dict
+        -------------- 
+        where each key represents a measurement by its name as a string, and each value the number of averages which are to be taken by said measurement, 
+        represented by an integer.
+
+        Parameters:
+        channel_settings: nested dict
+        -----------------------------
+        with a similar structure to Qupulse_decoder2.measurement_pars. Hardware relevant information can be added by the Settings object.
+
+        measurement_settings: nested dict
+        --------------------------------- 
+        with a similar structure to Qupulse_decoder2.measurement_pars. Hardware relevant information is added by the Settings object. 
+        The second level of the dictionary is expanded by following parameters which are keyed as:
+        "unit" The unit of the measurements values.
+        "data_nodes" The different data nodes which the measurement hardware returns for each measurement.
         """
         self._ro_backend = ro_backend
         self._ma_backend = ma_backend
@@ -325,6 +372,9 @@ class Settings:
             settings["data_nodes"] = self._ro_backend._registered_measurements[measurement]["data_nodes"]
     
     def load(self):
+        '''
+        Applies the settings specified by measurement_settings and channel_settings to the hardware backends
+        '''
         for measurement in self._ro_backend._registered_measurements:
             getattr(self._ro_backend, f"{measurement}_deactivate")()
         for measurement, settings in self.measurement_settings.items():
@@ -336,7 +386,45 @@ class Settings:
         self._ma_backend.load_waveform(self.channel_settings)
 
 class FileHandler:
+    '''
+    Constructor of FileHandler, the class responsible for saving the data to the hard drive. 
+
+    Parameters:
+    measurement_name: string 
+    ------------------------
+    representing the name of the next run measurement. Is reset to "" after the measurement is completed. 
+    When creating the file containing the measurement data, the measurement_name will be included in the file name, besides the UUID.
+
+    measurement_function_name: string 
+    ---------------------------------
+    representing the name of the function used to run the measurement. Is reset to "" after the measurement is completed. 
+    The measurement_function_name is logged in the measurement tab of the measurement file.
+
+    additional_watch: boolean
+    -------------------------
+    If true, the "additional_watch" tab is added to the measurement file. The separately logged instrument parameters are chosen as described in par_search_string.
+
+    par_search_string: string
+    ------------------------- 
+    Specify "prefix$$suffix", and all instrument parameters beginning with prefix, having an integer at the position of the placeholder "$$", 
+    and ending with suffix are logged separately, and can be found in the additional_watch tab of the measurement file.
+
+    par_search_placeholder: string
+    ------------------------------
+    Will be interpreted as placeholder instead of "$$" in par_search_string.
+
+    multiplexer_coordinates: nested dict
+    ------------------------------------ 
+    The first level is used to group different coordinate dictionaries according to their modes. The second level contains a dictionary where each key is
+    the name of a measurement, and the entry is a list of the associated coordinates.
+
+    datasets: dict
+    --------------
+    containing the datasets handled by the FileHandler object. The keys hereby are strings representing the names of the datasets, 
+    and the entries are qkit.measure.measurement_base.Data objects.
+    '''
     def __init__(self) -> None:
+
         self.mb = mb.MeasureBase()
         
         self.additional_watch = True
@@ -412,6 +500,20 @@ class FileHandler:
         self.multiplexer_coords[tag][measurement] = new_t_parameter
     
     def update_coordinates(self, tag, coord_instructions):
+        '''
+        Inputs:
+        tag: string 
+        -----------
+        which is used to group different coordinate dictionaries, and serves as the first level key in multiplexer_parameters.
+
+        coord_instructions: dict
+        ------------------------ 
+        It is keyed by strings which represent the names of the measurements to which the values belong. The values are lists of dictionaries, 
+        which contain the information needed to construct the measurement coordinates. The dictionaries within the list need to include the following keys:
+        "coordname" is a string representing the name of the coordinate.
+        "unit" is a string representing the unit of the coordinates values.
+        "values" is an iterable which must be convertible to a numpy.array. Contains the values of the coordinate
+        '''
         for measurement_name, instructions in coord_instructions.items():
             translated_coords = []
             for coord_instruction in instructions:
@@ -431,11 +533,30 @@ class FileHandler:
                     measurement["unit"])
 
     def reset(self):
+        '''
+        Empties multiplexer_coords and datasets.
+        '''
         self.datasets = {}
         self.multiplexer_coords = makehash()
 
     def add_dset(self, set_name, coords, unit):
         """
+        Adds a qkit.measure.measurement_base.Data to the datasets dictionary.
+
+        Inputs:
+        set_name: string 
+        ----------------
+        representing The name of the dataset which is to be added.
+
+        coords: list 
+        ------------
+        of qkit.measure.measurement_base.Coordinate objects. coordinates of the dataset. qkit.measure.measurement_base.Data are limited to three coordinates.
+
+        unit: string 
+        ------------
+        representing the unit of the dataset.
+
+
         """
         self.datasets[set_name] = self.mb.Data(name = set_name, coords = coords, unit = unit, 
                             save_timestamp = False)
@@ -455,6 +576,13 @@ class FileHandler:
 
     def prepare_measurement(self, coords):
         """
+        Creates a measurement file containing all the specified datasets and their coordinates, as well as additional coordinates, not intrinsic to
+        the datasets. Starts qviewkit, the file viewer UI. 
+        
+        Input:
+        coords: list 
+        ------------
+        of qkit.measure.measurement_base.Coordinate objects. It represents additional coordinates, not intrinsic to the datasets.
         """
         dsets = [dset for dset in self.datasets.values()]
         self.mb._prepare_measurement_file(dsets, coords)
@@ -478,6 +606,22 @@ class FileHandler:
         self.mb._open_qviewkit(data_to_show)
     
     def write_to_file(self, set_name, value, data_location):
+        '''
+        Writes the given values directly to the file on the hard drive.
+
+        Inputs:
+        set_name: string 
+        ----------------
+        representing the name of the dataset to which the incoming is written.
+
+        value: 
+        ------
+        is an iterable with a dimensionality from one to three. Must be convertible to a numpy.array. It contains the values which are to be written.
+
+        data_location: tuple of integers
+        -------------------------------- 
+        representing the location to which value is to be written within the file matrix.
+        '''
         if value.size != 0:            
             self.mb._datasets[set_name].ds[data_location] = value
             self.mb._data_file.flush()
@@ -485,9 +629,21 @@ class FileHandler:
             pass 
     
     def next_matrix(self, dset_name):
+        '''
+        Iterates through the outermost dimension in case of a three dimensional dataset.
+
+        Input:
+        dset_name: string 
+        -----------------
+        representing the name of the dataset on which the operation is to be performed.
+        '''
         self.mb._datasets[dset_name].next_matrix()
 
     def end_measurement(self):
+        '''
+        Closes the measurement file safely, making sure no data is lost. Additionally it saves the created measurement plots as .png files,
+        in a sub directory of the location of the measurement file.
+        '''
         self.mb._end_measurement()
 
 class Exciting():
@@ -529,13 +685,45 @@ class Exciting():
     def __init__(self, readout_backend, manipulation_backend,
                  *experiments, averages, active_modes = ("PulseParameter",), deep_render = False, **add_pars):
         """
-        Parameters
+        Constructor of Exciting, the experiment control class for synchronized asynchronous data acquisition. 
+        The constructor will raise a TypeError if the experimental instructions are not qupulse pulse templates, 
+        and their parameters are not given in the form of dictionaries. Will raise a ValueError if different experiments share the same measurements or channels. 
+        Will raise a ValueError if not all measurements defined in the experimental instructions are assigned a number of averages by averages. 
+        Will raise an AttributeError if channels or measurements requested in the experimental instructions are not provided by the manipulation and readout backends.
+
+        Inputs:
+        readout_backend: subclass 
+        -------------------------
+        of the RO_backend_base, used as interface to the readout hardware.
+
+        manipulation_backend: subclass
+        ------------------------------ 
+        of the MA_backend_base, used as interface to the manipulation hardware.
+
+        *experiments: tuples 
+        --------------------
+        of experimental instructions and their parameters. Currently qupulse is supported as experiment design framework.
+
+        averages: dict 
+        --------------
+        where each key represents a measurement by its name as a string, and each value the number of averages which are to be taken by said measurement, 
+        represented by an integer.
+
+        active_modes: tuple
+        -------------------
+        where each entry is a string or the whole argument is a single string, representing the used data processing mode or modes.
+
+        deep_render: boolean
+        --------------------
+        If set to True, waveforms of different iterations are rendered separately and returned as a list 
+        where each entry represents the samples for the given iteration. If set to False, the list is returned flattened
+
+        **add_pars 
         ----------
-        exp_name : str, optional
-            Name of the current experiment
-        sample : qkit.measure.samples_class.Sample, optional
-            Sample used in the current experiment
-        
+        represents additional keyword arguments that can be passed to the constructor. For example, the measurement_mapping keyword argument can be passed, 
+        which is a dictionary whose keys represent the names of measurements in the experiment instructions as strings, and whose values represent the names 
+        of the measurements provided by the hardware as strings, to which the measurement in the experiment instruction is to be assigned. The keyword argument
+        channel_mapping is similar, it assigns channels from the experimental instructions to channels provided by the hardware.      
         """
         
         self._validate_RO_backend(readout_backend)
@@ -679,7 +867,11 @@ class Exciting():
     def change_averages(self, averages):
         '''
         Changes the amount of averages performed without recompiling the whole experiment.
-        averages is a dictionary where each key represents a measurement by its name as a string, and each value the number of averages
+        
+        Inputs:
+        averages: dict
+        -------------- 
+        where each key represents a measurement by its name as a string, and each value the number of averages
         which are to be taken by said measurement, represented by an integer.
         '''
 
