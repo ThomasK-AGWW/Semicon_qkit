@@ -87,7 +87,7 @@ class Qupulse_decoder2:
         where each key represents a measurement by its name as a string, 
         and the value the sampling rate of said measurement in samples per second as an integer.
 
-        deep_render: boolean
+        deep_render: bool
         --------------------
         If set to True, waveforms of different iterations are rendered separately 
         and returned as a list where each entry represents the samples for the given iteration. If set to False, 
@@ -298,12 +298,12 @@ class Settings:
         --------------------
         of the MA_backend_base, used as interface to the manipulation hardware.
 
-        channel_params: nested dict
+        channel_params: dict
         --------------------------- 
         where on the first level each key represents a channel by its name. The second level contains the parameters for each channel. 
         An example of the required structure is given by spin_excite.Qupulse_decoder2.channel_pars.
 
-        measurement_params: nested dict 
+        measurement_params: dict 
         -------------------------------
         where on the first level each key represents a measurement by its name. The second level contains the parameters for each measurement. 
         An example of the required structure is given by spin_excite.Qupulse_decoder2.measurement_pars.
@@ -314,11 +314,11 @@ class Settings:
         represented by an integer.
 
         Parameters:
-        channel_settings: nested dict
+        channel_settings: dict
         -----------------------------
         with a similar structure to Qupulse_decoder2.measurement_pars. Hardware relevant information can be added by the Settings object.
 
-        measurement_settings: nested dict
+        measurement_settings: dict
         --------------------------------- 
         with a similar structure to Qupulse_decoder2.measurement_pars. Hardware relevant information is added by the Settings object. 
         The second level of the dictionary is expanded by following parameters which are keyed as:
@@ -400,7 +400,7 @@ class FileHandler:
     representing the name of the function used to run the measurement. Is reset to "" after the measurement is completed. 
     The measurement_function_name is logged in the measurement tab of the measurement file.
 
-    additional_watch: boolean
+    additional_watch: bool
     -------------------------
     If true, the "additional_watch" tab is added to the measurement file. The separately logged instrument parameters are chosen as described in par_search_string.
 
@@ -413,7 +413,7 @@ class FileHandler:
     ------------------------------
     Will be interpreted as placeholder instead of "$$" in par_search_string.
 
-    multiplexer_coordinates: nested dict
+    multiplexer_coordinates: dict
     ------------------------------------ 
     The first level is used to group different coordinate dictionaries according to their modes. The second level contains a dictionary where each key is
     the name of a measurement, and the entry is a list of the associated coordinates.
@@ -713,7 +713,7 @@ class Exciting():
         -------------------
         where each entry is a string or the whole argument is a single string, representing the used data processing mode or modes.
 
-        deep_render: boolean
+        deep_render: bool
         --------------------
         If set to True, waveforms of different iterations are rendered separately and returned as a list 
         where each entry represents the samples for the given iteration. If set to False, the list is returned flattened
