@@ -1020,6 +1020,16 @@ class Exciting():
             raise e
 
     def measure1D(self, data_to_show = []):
+        '''
+        Inputs:
+        data_to_show: list or strings
+        ----------------------------- 
+        representing the names of the datasets which are to be shown by the viewer qviewkit upon measurement start. Raises AssertionError if the x parameter 
+        has not been set. 
+        
+        Performs a measurement along the x axis. All active measurements stream data to Watching.  The data is mappped onto the x axis. 
+        E.g. during a streaming event Watching received 10 samples for a specific measurement and maps them to the next 10 values  of the x axis.
+        '''
         self.fh.measurement_function_name = f"{__name__}: measure1D"
         self._prepare_measurement(data_to_show = data_to_show)
         pb = Progress_Bar(self._total_iterations)
@@ -1029,6 +1039,17 @@ class Exciting():
             self._end_measurement()
     
     def measure2D(self, data_to_show = []):
+        '''
+        Inputs:
+        data_to_show: list or strings
+        ----------------------------- 
+        representing the names of the datasets which are to be shown by the viewer qviewkit upon measurement start. Raises AssertionError if the x or y parameter 
+        has not been set. 
+        
+        Performs a measurement along the x and y axis. X is used as outer and y is used as inner coordinate. All active measurements stream data to Watching. 
+        The data is mapped onto the y axis. The x axis is now used as synchronous coordinate. A use case would be recording a current noise trace versus 
+        applied magnetic field.
+        '''
         self.fh.measurement_function_name = f"{__name__}: measure2D"
         self._prepare_measurement([self._x_parameter], data_to_show)
         pb = Progress_Bar(len(self._x_parameter.values) * self._total_iterations)
@@ -1040,7 +1061,17 @@ class Exciting():
         finally:
             self._end_measurement()
 
-    def measure3D(self, data_to_show = []):        
+    def measure3D(self, data_to_show = []):  
+        '''
+        data_to_show: list or strings 
+        -----------------------------
+        representing the names of the datasets which are to be shown by the viewer qviewkit upon measurement start. 
+        Raises AssertionError if no x,y or z parameters have been set.
+
+        Performs a measurement along the x,y and z axis. X is used as outer, y as intermediate and z is used as inner coordinate. 
+        All active measurements stream data to Watching. The data is mapped onto the z axis. The x and y axis are now used as synchronous coordinates.
+        A use case would be recording a current noise trace versus applied magnetic field and temperature.       
+        '''
         self.fh.measurement_function_name = f"{__name__}: measure3D"
         self._prepare_measurement([self._x_parameter, self._y_parameter], data_to_show)
         pb = Progress_Bar(len(self._x_parameter.values) * len(self._y_parameter.values) * self._total_iterations)
